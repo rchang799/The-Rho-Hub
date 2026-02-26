@@ -25,11 +25,13 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 export async function askTheSage(
   question: string,
   schedule: PlanEvent[],
+  referenceText?: string,
 ): Promise<string> {
   try {
     const data = await postJson<{ answer: string }>('/api/ask-the-sage', {
       question,
       schedule,
+      referenceText,
     });
     return data.answer;
   } catch (error) {

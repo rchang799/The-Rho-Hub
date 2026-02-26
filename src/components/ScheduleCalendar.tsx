@@ -67,7 +67,11 @@ export default function ScheduleCalendar({ events, onEventsChange }: ScheduleCal
     }
   };
 
-  const calendarEvents = events.map(event => ({
+  // Hide completed tasks from the calendar view so that finishing something
+  // removes it from the visual schedule.
+  const visibleEvents = events.filter(event => !event.completed);
+
+  const calendarEvents = visibleEvents.map(event => ({
     title: event.title,
     start: event.start,
     end: event.end,

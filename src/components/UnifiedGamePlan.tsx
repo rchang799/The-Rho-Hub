@@ -11,9 +11,16 @@ interface UnifiedGamePlanProps {
   onScheduleUpdate: (events: PlanEvent[]) => void;
   onTaskCompletion: (taskId: string) => void;
   onTaskUpdate: (updatedTask: PlanEvent) => void;
+  onTaskDelete: (taskId: string) => void;
 }
 
-export default function UnifiedGamePlan({ initialEvents, onScheduleUpdate, onTaskCompletion, onTaskUpdate }: UnifiedGamePlanProps) {
+export default function UnifiedGamePlan({
+  initialEvents,
+  onScheduleUpdate,
+  onTaskCompletion,
+  onTaskUpdate,
+  onTaskDelete,
+}: UnifiedGamePlanProps) {
   const [events, setEvents] = useState<PlanEvent[]>(initialEvents);
 
   useEffect(() => {
@@ -38,6 +45,13 @@ export default function UnifiedGamePlan({ initialEvents, onScheduleUpdate, onTas
     onScheduleUpdate(updatedEvents);
   };
 
+  const handleTaskDelete = (taskId: string) => {
+    const updatedEvents = events.filter(event => event.id !== taskId);
+    setEvents(updatedEvents);
+    onScheduleUpdate(updatedEvents);
+    onTaskDelete(taskId);
+  };
+
   const handleEventsChange = (updatedEvents: PlanEvent[]) => {
     setEvents(updatedEvents);
     onScheduleUpdate(updatedEvents);
@@ -51,7 +65,12 @@ export default function UnifiedGamePlan({ initialEvents, onScheduleUpdate, onTas
   return (
     <div className="space-y-8">
       <h2 className="text-3xl font-bold text-slate-800 mb-6">Unified Game Plan</h2>
-      <WhatToDoNext events={allEventsWithWorkBlocks} onTaskCompletion={onTaskCompletion} onTaskUpdate={handleTaskUpdate} />
+      <WhatToDoNext
+        events={allEventsWithWorkBlocks}
+        onTaskCompletion={onTaskCompletion}
+        onTaskUpdate={handleTaskUpdate}
+        onTaskDelete={handleTaskDelete}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-8">
           <MyGamePlan onTasksGenerated={handleTasksGenerated} />

@@ -39,7 +39,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.post("/api/ask-the-sage", async (req, res) => {
-  const { question, schedule } = req.body || {};
+  const { question, schedule, referenceText } = req.body || {};
 
   if (!question) {
     return res.status(400).json({ error: "Missing 'question' in request body." });
@@ -51,6 +51,9 @@ You MUST function as an expert assistant/teacher. Before you answer, take a brie
 
 For context, here is the user's current schedule (JSON):
 ${JSON.stringify(schedule ?? [], null, 2)}
+
+Additional reference material from the user (may include uploaded files, notes, etc.):
+${referenceText || "No extra reference material provided."}
 
 User's question: "${question}"
 

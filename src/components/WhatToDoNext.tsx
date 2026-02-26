@@ -8,9 +8,15 @@ interface WhatToDoNextProps {
   events: PlanEvent[];
   onTaskCompletion: (taskId: string) => void;
   onTaskUpdate: (updatedTask: PlanEvent) => void;
+  onTaskDelete: (taskId: string) => void;
 }
 
-export default function WhatToDoNext({ events, onTaskCompletion, onTaskUpdate }: WhatToDoNextProps) {
+export default function WhatToDoNext({
+  events,
+  onTaskCompletion,
+  onTaskUpdate,
+  onTaskDelete,
+}: WhatToDoNextProps) {
   const [completedExpanded, setCompletedExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<PlanEvent | null>(null);
@@ -38,7 +44,10 @@ export default function WhatToDoNext({ events, onTaskCompletion, onTaskUpdate }:
       {activeTasks.length > 0 ? (
         <ul className="space-y-3">
           {activeTasks.map((task, index) => (
-            <li key={task.id} className={`p-3 rounded-md transition-all bg-indigo-50 border-l-4 border-indigo-500`}>
+            <li
+              key={task.id}
+              className="p-3 rounded-md transition-all bg-indigo-50 border-l-4 border-indigo-500"
+            >
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
                   <input
@@ -49,14 +58,29 @@ export default function WhatToDoNext({ events, onTaskCompletion, onTaskUpdate }:
                   />
                   <span className={`font-bold text-indigo-800`}>{task.title}</span>
                 </div>
-                <div className="flex items-center">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    index === 0 ? 'bg-red-100 text-red-800' : index === 1 ? 'bg-orange-100 text-orange-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>
+                <div className="flex items-center space-x-1">
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      index === 0
+                        ? 'bg-red-100 text-red-800'
+                        : index === 1
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}
+                  >
                     {task.priority}
                   </span>
-                  <button onClick={() => handleEditClick(task)} className="ml-2 p-1 text-slate-500 hover:text-indigo-600">
+                  <button
+                    onClick={() => handleEditClick(task)}
+                    className="p-1 text-slate-500 hover:text-indigo-600"
+                  >
                     <Edit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => onTaskDelete(task.id)}
+                    className="text-[11px] text-red-500 hover:text-red-700"
+                  >
+                    Remove
                   </button>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare, X, Send, Maximize, Minimize, GripVertical } from 'lucide-react';
+import { MessageSquare, X, Send, Maximize, Minimize, GripVertical, UploadCloud } from 'lucide-react';
 import Draggable from 'react-draggable';
 import { askTheSage, extractTasksFromNotes } from '../services/geminiService';
 import { PlanEvent } from '../types';
@@ -17,6 +17,18 @@ export default function CornerAssistant({ schedule, onScheduleUpdate }: CornerAs
   ]);
   const [inputText, setInputText] = useState('');
   const [extractedTasks, setExtractedTasks] = useState<PlanEvent[]>([]);
+  const [referenceText, setReferenceText] = useState('');
+
+  const handleReferenceFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const texts: string[] = [];
+    for (const file of Array.from(files)) {
+      // Simple text extraction; works best for .txt/.md. PDFs may be noisy.
+      const content = await file.text();
+      texts.push(`--- ${file.name} ---\n${content}`);
+    }
+    setReferenceText(prev => [prev, ...texts].filter(Boolean).join('\n\n'));
+  };
 
   const handleSendMessage = async () => {
     if (inputText.trim() === '') return;
@@ -25,8 +37,12 @@ export default function CornerAssistant({ schedule, onScheduleUpdate }: CornerAs
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
 
+    const combinedReference = referenceText.trim();
+
     if (inputText.length > 100 && inputText.includes('\n')) {
-      const tasks = await extractTasksFromNotes(inputText);
+      const tasks = await extractTasksFromNotes(
+        combinedReference ? `${combinedReference}\n\n${inputText}` : inputText,
+      );
       if (tasks.length > 0) {
         const planEvents: PlanEvent[] = tasks.map(task => ({ ...task, id: `task-${Date.now()}`, source: 'generated-task', priority: 'Medium' }));
         setExtractedTasks(planEvents);
@@ -35,7 +51,7 @@ export default function CornerAssistant({ schedule, onScheduleUpdate }: CornerAs
       }
     }
 
-    const sageResponse = await askTheSage(inputText, schedule);
+    const sageResponse = await askTheSage(inputText, schedule, combinedReference || undefined);
     setMessages(prev => [...prev, { id: Date.now() + 1, text: sageResponse, sender: 'sage' }]);
   };
 
@@ -98,17 +114,41 @@ export default function CornerAssistant({ schedule, onScheduleUpdate }: CornerAs
             </div>
           ))}
         </div>
-        <div className="p-4 border-t border-slate-200">
+        <div className="p-4 border-t border-slate-200 space-y-2">
           <div className="flex items-center space-x-2">
-            <input 
-              type="text" 
+            <label className="flex items-center px-2 py-1 text-xs bg-slate-100 rounded-md cursor-pointer text-slate-700 hover:bg-slate-200">
+              <UploadCloud className="w-4 h-4 mr-1" />
+              <span>Attach reference</span>
+              <input
+                type="file"
+                multiple
+                accept=".txt,.md,.pdf"
+                className="hidden"
+                onChange={(e) => handleReferenceFiles(e.target.files)}
+              />
+            </label>
+            {referenceText && (
+              <button
+                onClick={() => setReferenceText('')}
+                className="text-[11px] text-slate-500 hover:text-red-500"
+              >
+                Clear reference
+              </button>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               placeholder="Ask The Sage..."
               className="flex-1 p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-900"
             />
-            <button onClick={handleSendMessage} className="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700">
+            <button
+              onClick={handleSendMessage}
+              className="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700"
+            >
               <Send size={20} />
             </button>
           </div>
